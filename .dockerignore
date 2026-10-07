@@ -1,0 +1,10 @@
+# Secrets and local-only stuff must never be baked into the image
+.env
+.git
+.gitignore
+venv
+.venv
+__pycache__
+*.pyc
+*.db
+data

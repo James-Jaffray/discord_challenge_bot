@@ -1,0 +1,15 @@
+services:
+  bot:
+    build: .
+    container_name: challenge-bot
+    # Start again automatically after a crash or a reboot of the server
+    restart: unless-stopped
+    # Pass DISCORD_TOKEN, GUILD_ID, ANNOUNCE_CHANNEL_ID in from the .env file
+    # sitting next to this file. The .env is NOT copied into the image.
+    env_file: .env
+    # Keep the database in a named volume so it survives rebuilds
+    volumes:
+      - bot-data:/data
+
+volumes:
+  bot-data:

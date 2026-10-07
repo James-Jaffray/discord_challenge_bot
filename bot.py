@@ -345,4 +345,70 @@ async def reset_round(interaction: discord.Interaction):
     await interaction.followup.send(f"Reset! Cleared roles from {cleared} members. Ready for the next round.")
 
 
+@bot.tree.command(name="projects", description="Show every project and whether it's been used", guild=TEST_GUILD)
+@app_commands.default_permissions(administrator=True)
+async def projects(interaction: discord.Interaction):
+    all_projects = db.list_projects()
+    available = [p for p in all_projects if p["used"] == 0]
+
+    # One line per project. Used ones get a "(used)" tag.
+    lines = []
+    for p in all_projects:
+        tag = " *(used)*" if p["used"] == 1 else ""
+        lines.append(f"**{p['name']}**{tag} - {p['skills']}")
+
+    # Embed descriptions are limited to 4096 characters, so cut if we ever go over
+    text = "\n".join(lines)
+    if len(text) > 4000:
+        text = text[:4000] + "\n..."
+
+    embed = discord.Embed(
+        title=f"Projects: {len(available)} available / {len(all_projects)} total",
+        description=text or "No projects yet. Add one with /add-project.",
+    )
+    # ephemeral = only you can see the reply
+    await interaction.response.send_message(embed=embed, ephemeral=True)
+
+
+@bot.tree.command(name="add-project", description="Add a new project to the list", guild=TEST_GUILD)
+@app_commands.default_permissions(administrator=True)
+@app_commands.describe(
+    name="Project name",
+    description="One-line description of what people build",
+    skills="Skills used, for example: JS, SQL",
+)
+async def add_project(interaction: discord.Interaction, name: str, description: str, skills: str = ""):
+    # db.add_project returns False if a project with that name already exists
+    added = db.add_project(name.strip(), description.strip(), skills.strip())
+    if added:
+        await interaction.response.send_message(f"Added **{name.strip()}**.", ephemeral=True)
+    else:
+        await interaction.response.send_message(f"There's already a project called **{name.strip()}**.", ephemeral=True)
+
+
+@bot.tree.command(name="remove-project", description="Remove a project that hasn't been used yet", guild=TEST_GUILD)
+@app_commands.default_permissions(administrator=True)
+@app_commands.describe(name="The project to remove")
+async def remove_project(interaction: discord.Interaction, name: str):
+    result = db.remove_project(name.strip())
+    if result == "removed":
+        await interaction.response.send_message(f"Removed **{name.strip()}**.", ephemeral=True)
+    elif result == "used":
+        await interaction.response.send_message(
+            f"**{name.strip()}** has already been used in a round, so it stays in the history.", ephemeral=True
+        )
+    else:
+        await interaction.response.send_message(f"I couldn't find a project called **{name.strip()}**.", ephemeral=True)
+
+
+# Autocomplete: as you type in the "name" box of /remove-project, Discord asks
+# this function for suggestions. We suggest unused projects that match what you've typed.
+@remove_project.autocomplete("name")
+async def remove_project_autocomplete(interaction: discord.Interaction, current: str):
+    unused_names = [p["name"] for p in db.list_projects() if p["used"] == 0]
+    matches = [n for n in unused_names if current.lower() in n.lower()]
+    # Discord allows at most 25 suggestions
+    return [app_commands.Choice(name=n, value=n) for n in matches[:25]]
+
+
 bot.run(TOKEN)

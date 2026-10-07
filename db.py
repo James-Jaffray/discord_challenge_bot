@@ -1,7 +1,11 @@
+import os
 import sqlite3
 import csv
 
-DB_PATH = "challenge.db"
+# Where the database file lives. Locally this is just "challenge.db" next to the code.
+# In Docker we set DB_PATH=/data/challenge.db so the file is kept on a volume
+# and survives rebuilding or replacing the container.
+DB_PATH = os.getenv("DB_PATH", "challenge.db")
 
 
 def get_connection():
@@ -50,12 +54,23 @@ def init_db():
         )
 
 def load_projects(csv_path="projects.csv"):
-    with get_connection() as conn, open(csv_path, newline="", encoding="utf-8") as f:
-        for row in csv.DictReader(f):
-            conn.execute(
-                "INSERT OR IGNORE INTO projects (name, description, skills) VALUES (?, ?, ?)",
-                (row["name"], row["description"], row["skills"]),
-            )
+    """Fill the projects table from the CSV, but ONLY if the table is empty.
+
+    The CSV is just the starting list. After the first run the database is the
+    source of truth, so projects you remove with /remove-project can't come
+    back when the bot restarts. Manage the list with /add-project and /remove-project.
+    """
+    with get_connection() as conn:
+        count = conn.execute("SELECT COUNT(*) FROM projects").fetchone()[0]
+        if count > 0:
+            return  # already seeded, leave the list alone
+
+        with open(csv_path, newline="", encoding="utf-8") as f:
+            for row in csv.DictReader(f):
+                conn.execute(
+                    "INSERT OR IGNORE INTO projects (name, description, skills) VALUES (?, ?, ?)",
+                    (row["name"], row["description"], row["skills"]),
+                )
 
 def draw_project():
     """Pick a random project that hasn't been used yet (None if all are used).
@@ -127,3 +142,51 @@ def save_teams(round_id, teams):
                     "INSERT INTO round_teams (round_id, team_number, user_id) VALUES (?, ?, ?)",
                     (round_id, team_number, user_id),
                 )
+
+
+def list_projects():
+    """Return every project (oldest first), including whether it's been used."""
+    with get_connection() as conn:
+        return conn.execute(
+            "SELECT id, name, description, skills, used FROM projects ORDER BY id"
+        ).fetchall()
+
+
+def add_project(name, description, skills):
+    """Add a project. Returns False if one with that name already exists."""
+    with get_connection() as conn:
+        # Compare in lowercase so "Digital Pet" and "digital pet" count as duplicates
+        existing = conn.execute(
+            "SELECT 1 FROM projects WHERE LOWER(name) = LOWER(?)", (name,)
+        ).fetchone()
+        if existing is not None:
+            return False
+        conn.execute(
+            "INSERT INTO projects (name, description, skills) VALUES (?, ?, ?)",
+            (name, description, skills),
+        )
+        return True
+
+
+def remove_project(name):
+    """Remove an UNUSED project by name.
+
+    Returns "removed", "not_found", or "used". Used projects can't be removed
+    because past rounds point to them (they're part of the history).
+    """
+    with get_connection() as conn:
+        project = conn.execute(
+            "SELECT id, used FROM projects WHERE LOWER(name) = LOWER(?)", (name,)
+        ).fetchone()
+        if project is None:
+            return "not_found"
+
+        # Refuse if it's been used, or if any round references it
+        in_a_round = conn.execute(
+            "SELECT 1 FROM rounds WHERE project_id = ?", (project["id"],)
+        ).fetchone()
+        if project["used"] == 1 or in_a_round is not None:
+            return "used"
+
+        conn.execute("DELETE FROM projects WHERE id = ?", (project["id"],))
+        return "removed"
