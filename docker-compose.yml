@@ -2,14 +2,15 @@ services:
   bot:
     build: .
     container_name: challenge-bot
-    # Start again automatically after a crash or a reboot of the server
+    # Start again automatically after a crash or after the NAS reboots
     restart: unless-stopped
     # Pass DISCORD_TOKEN, GUILD_ID, ANNOUNCE_CHANNEL_ID in from the .env file
     # sitting next to this file. The .env is NOT copied into the image.
     env_file: .env
-    # Keep the database in a named volume so it survives rebuilds
+    # Run as your NAS user so the bot can write to the data folder below.
+    # CHANGE "1026:100" to your own UID:GID (see step 1 of the Synology guide).
+    user: "1026:100"
+    # The database lives in the "data" folder next to this file, so you can see
+    # it in File Station and include it in Hyper Backup.
     volumes:
-      - bot-data:/data
-
-volumes:
-  bot-data:
+      - ./data:/data
