@@ -1,0 +1,24 @@
+name,description,skills
+Daily Puzzle Game,"Wordle-style, one new puzzle a day with a leaderboard","JS, SQL, Python"
+Class Trivia Battle,Submit and vote on questions from course material,"JS, SQL"
+Campus Food Ranker,Rate and rank food spots near NAIT,"HTML/CSS, JS"
+Text Adventure,"Survive your first semester, everyone writes a room",Python
+Class Bracket Tool,"Head-to-head voting, winners advance",JS
+Creative Login Screen,"Most ridiculous, original username/password UI","HTML/CSS, JS"
+Useless Calculator,"Works, but with a gimmick (runaway buttons, emoji answers)",JS
+Excuse Generator,Button mixes word lists into a new excuse each click,JS
+Mood Page Picker,"Pick a mood, get a themed page with song, colours, quote","HTML/CSS, JS"
+Decision Wheel,Spinner that picks where to eat or who presents first,"JS, CSS"
+Typing Speed Race,"Type a passage against the clock, show WPM and a best-score list",JS
+Digital Pet,"A pet that gets hungry over time, feed and play with it to keep it alive","JS, CSS"
+Memory Match Game,"Flip cards to find pairs, with a move counter and timer","HTML/CSS, JS"
+Fake Terminal Portfolio,"A page that looks like a command line, type commands to see ""about me"" and projects","JS, CSS"
+Reaction Time Tester,"Click as fast as you can when the screen changes colour, ranks your speed",JS
+Dungeon Crawler (ASCII),"Move around a text-drawn map, fight monsters, grab loot, random layout each run",Python
+Password Strength Roaster,"Type a password and it rates it with savage-but-friendly feedback (""your dog's name? bold"")",Python
+Fake Hacker Terminal,"Scrolling ""hacking"" animation with fake progress bars, IPs and access-granted messages",Python
+Story Mad-Libs Machine,"Asks for words, then drops them into randomly picked silly story templates",Python
+Text Fortune Teller,"Ask a question, get a random prophecy built from word lists, with a ""mystery level"" setting",Python
+Rock Paper Scissors AI,"Plays you over many rounds, tracks your habits and tries to predict your next move",Python
+Secret Code Maker,"Encode and decode messages with ciphers (Caesar, emoji swap, your own invention)",Python
+Terminal Quiz Show,"Timed multiple-choice trivia with lives, streaks and a high-score file",Python
