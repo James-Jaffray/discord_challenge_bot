@@ -24,6 +24,18 @@ def init_db():
             """
         )
 
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS rounds (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                project_id INTEGER NOT NULL REFERENCES projects(id),
+                message_id INTEGER NOT NULL,
+                status TEXT NOT NULL DEFAULT 'open',
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )
+            """
+        )
+
 def load_projects(csv_path="projects.csv"):
     with get_connection() as conn, open(csv_path, newline="", encoding="utf-8") as f:
         for row in csv.DictReader(f):
@@ -41,3 +53,10 @@ def draw_project():
             return None
         conn.execute("UPDATE projects SET used = 1 WHERE id = ?", (row["id"],))
         return row
+
+def create_round(project_id, message_id):
+    with get_connection() as conn:
+        conn.execute(
+            "INSERT INTO rounds (project_id, message_id) VALUES (?, ?)",
+            (project_id, message_id),
+        )
