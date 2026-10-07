@@ -31,3 +31,13 @@ def load_projects(csv_path="projects.csv"):
                 "INSERT OR IGNORE INTO projects (name, description, skills) VALUES (?, ?, ?)",
                 (row["name"], row["description"], row["skills"]),
             )
+
+def draw_project():
+    with get_connection() as conn:
+        row = conn.execute(
+            "SELECT * FROM projects WHERE used = 0 ORDER BY RANDOM() LIMIT 1"
+        ).fetchone()
+        if row is None:
+            return None
+        conn.execute("UPDATE projects SET used = 1 WHERE id = ?", (row["id"],))
+        return row
